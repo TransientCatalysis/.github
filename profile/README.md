@@ -23,22 +23,24 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 
 | Repository | What it is |
 |---|---|
-| **[`tcat-data-standard`](https://github.com/TransientCatalysis/tcat-data-standard)** | What counts as a valid dataset. Schema, validator, ingestion contract. Small, boring, changes slowly — three institutions depend on it. **Public.** |
+| **[`tcat-data-standard`](https://github.com/TransientCatalysis/tcat-data-standard)** | What counts as a valid dataset. Nine document kinds, a validator, and the ingestion contract. Small, boring, changes slowly — three institutions depend on it. **Public.** |
 | **`tcat-analysis`** | The integration layer: tool contract, content-addressed artifact store, sensor models, uncertainty-aware fitting, experiment design. Changes constantly. |
-| **`tcat-index`** | Metadata-only registry of which artifacts exist and which sites hold copies. No bytes. |
+| **`tcat-index`** | The project research database. Registries for artifacts, datasets, samples, models, and publications, with deposit, query, catalog, and public-export interfaces. Metadata only, no bytes. |
 | **`tcat-spoke-template`** | Template for a per-lab or per-campaign data repository. |
 
 Analysis code depends on a pinned data-standard version. **Never the reverse** — if an analysis feature seems to need a schema change, that is evidence the schema is wrong, not that the boundary should move.
 
 ## Where to start
 
-**Depositing data?** Create a repository from [`tcat-spoke-template`](https://github.com/TransientCatalysis/tcat-spoke-template) — one per lab or instrument campaign, not per dataset — and work through its `SPOKE-SETUP.md`. Then `pip install tcat-data-standard` and run `tcat-validate all .` until it is clean. Passing CI is the definition of ingestible.
+**Depositing data?** Create a repository from [`tcat-spoke-template`](https://github.com/TransientCatalysis/tcat-spoke-template) — one per lab or instrument campaign, not per dataset — and work through its `SPOKE-SETUP.md`. Then `pip install tcat-data-standard` and run `tcat-validate all .` until it is clean. Passing CI is the definition of ingestible. Finally register what you deposited in `tcat-index`, which is what makes it findable — an artifact id is a hash, so nothing can discover it otherwise.
+
+**Looking for data?** `tcat-index` is the registry. `catalog.json` is one flat file listing everything; `query.py` searches by sample, batch, lineage, modality, objective, or DOI, walks a provenance chain back to raw, and tells you what a revised calibration just invalidated.
 
 **Writing analysis?** Read `tcat-analysis`'s `PROMOTION.md`. The spiking zone is unconstrained — fork, thrash, no review. Promotion into the hub is the single expensive gate.
 
 **Reading from outside the project?** Start with [`STANDARD.md`](https://github.com/TransientCatalysis/tcat-data-standard/blob/main/STANDARD.md). It is the design document, and each rule says why it exists rather than only what it requires.
 
-## Three ideas that shape everything here
+## Four ideas that shape everything here
 
 **A raw signal and a derived quantity are different things.** A mass-spec ion current is not a concentration. The sensor model between them is a separate, versioned, content-addressed artifact, and every derived trace cites both its raw input and the calibration that produced it. So when someone finds an m/z 44 artifact eighteen months later, you swap one calibration id, re-derive every affected trace, and the store tells you exactly which downstream fits went stale.
 
@@ -46,13 +48,15 @@ Analysis code depends on a pinned data-standard version. **Never the reverse** �
 
 **Store the sample, not the summary.** Parameter uncertainty is stored as a sample, with a covariance matrix treated as a derived summary. Gaussian summaries discard exactly the correlation structure that drives experimental design — and frequentist fits emit an ensemble in the same shape a sampler would, so experiment design needs one pathway rather than two.
 
+**Splits are groups, not rows.** A model records which `batch_id` and `lineage_id` values went into train, validation, and test — so a validator can *fail* when a group appears in two of them. Catalysis data has shared lineages and repeated conditions, so a row-level split of an autocorrelated transient leaks and looks fine.
+
 ## Standards
 
 Our data model is a **profile of** [TRACE-AI](https://github.com/trace-ai-org/trace-ai-checklist) (v2.2.0), not an invention alongside it — see [`profiles/trace-ai/`](https://github.com/TransientCatalysis/tcat-data-standard/tree/main/profiles/trace-ai) for the field-by-field crosswalk and what we deliberately do differently.
 
 > Xin, H. *et al.* "Transparent reporting for agentic catalysis enabled by artificial intelligence: Community guidelines and a publication checklist." *Chem Catalysis* (2026). [10.1016/j.checat.2026.101755](https://doi.org/10.1016/j.checat.2026.101755)
 
-Transient kinetics, stiff solvers, and model-based experiment design are genuinely underspecified upstream, which is written around steady-state screening and closed-loop synthesis. A transient-kinetics profile contributed back is a planned output of this work.
+Transient kinetics, stiff solvers, and model-based experiment design are genuinely underspecified upstream, which is written around steady-state screening and closed-loop synthesis. A transient-kinetics profile contributed back is a planned output of this work — the concrete candidates are parameterised perturbation waveforms that are exactly regenerable, time-base alignment across simultaneously-acquired modalities, sensor models as versioned citable artifacts, and split assignments expressed as groups.
 
 ## Licensing
 
