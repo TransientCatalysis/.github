@@ -132,7 +132,14 @@ that no test covers until CI — and some of them are not covered at all.
   one name for different procedures collide on a single id with **no error
   anywhere**)
 - flip a `hashed: true` to `false`
-- bump `standard_version`, a schema version, or a `tool_version`
+- bump `standard_version` or a schema version
+
+**And one an agent must do rather than avoid:** if a change alters what a tool
+outputs, bump the spoke's `__version__` and re-run `tcat-spoke fingerprint`. The
+version is hashed into every artifact id, so without the bump the store keeps
+serving pre-change results under ids that look correct. CI fails when `src/`
+changed and the version did not — the message tells you which of the two honest
+answers applies.
 - delete or edit an artifact
 - touch anything under a `raw/` directory
 - change repository settings or branch protection
