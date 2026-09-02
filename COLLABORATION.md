@@ -145,6 +145,14 @@ answers applies.
 - change repository settings or branch protection
 - add an `xfail` or a skip to a failing gate
 
+**Develop disconnected.** Use `sandbox/` or a scratch store (`--store /tmp/...`)
+until the numbers are believed. A registry full of results nobody stands behind
+is as bad as no registry, and an agent asked to iterate on a fit will otherwise
+run it against whatever store it finds. One guarantee is automatic: a **dirty
+working tree can only mint `ephemeral` artifacts**, which are never registered
+and never synced — so uncommitted code cannot pollute a shared store whatever
+you run. `PROMOTION.md` has the four levels.
+
 **When a gate fails, the agent opens an issue with the output. It does not weaken
 the gate.** Three temptations this project has already had to defend against, by
 name: relaxing `tcat-conform`; relaxing `compile_axial_integrator`'s Courant
