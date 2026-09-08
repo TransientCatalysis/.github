@@ -133,6 +133,10 @@ that no test covers until CI — and some of them are not covered at all.
   anywhere**)
 - flip a `hashed: true` to `false`
 - bump `standard_version` or a schema version
+- delete or edit an artifact
+- touch anything under a `raw/` directory
+- change repository settings or branch protection
+- add an `xfail` or a skip to a failing gate
 
 **And one an agent must do rather than avoid:** if a change alters what a tool
 outputs, bump the spoke's `__version__` and re-run `tcat-spoke fingerprint`. The
@@ -140,10 +144,73 @@ version is hashed into every artifact id, so without the bump the store keeps
 serving pre-change results under ids that look correct. CI fails when `src/`
 changed and the version did not — the message tells you which of the two honest
 answers applies.
-- delete or edit an artifact
-- touch anything under a `raw/` directory
-- change repository settings or branch protection
-- add an `xfail` or a skip to a failing gate
+
+### One bump per landing, and which digit
+
+The rule above says a bump is needed. It does not say how often, and answering
+"once per change" is how one spoke went **0.1.0 to 0.10.2 in five days**, three
+of those numbers stamped in a working tree and never committed — so no tree
+anybody could check out was ever at two of them.
+
+**Bump in the commit that LANDS the work, once, however many changes it
+contains.** A version is not a changelog. What it has to be is a name for a
+state of the source somebody else can obtain.
+
+**While you are iterating, change the STORE, not the version.** This is the
+substitution that removes most of the pressure. A mid-work bump is almost always
+being used to buy isolation from your own earlier results — and a fresh
+`--store` gives that for free, immediately, without re-hashing every artifact in
+the project or invalidating a colleague's cache. The fingerprint check is what
+catches a bump you forgot at landing time, so a bump you make early buys nothing
+that a directory does not.
+
+Which digit, given that EVERY bump re-hashes and the mechanism is identical for
+all three — so the size of the increment is free to carry meaning:
+
+| | when |
+|---|---|
+| **patch** | the default. The output changed, the CONTRACT did not: bug fixes, numerical corrections, a field added to a report. Anything written against the previous version still runs and still means what it meant. |
+| **minor** | the surface a caller can INVOKE grew: a new hashed parameter, a new tool, a new accepted solver or criterion value, a new artifact kind. Hashed parameters *are* the contract surface, so this is the same boundary drawn twice. |
+| **major** | a break: a parameter removed, an artifact kind renamed, or an existing hashed value changing meaning. |
+
+Reserve the changelog for what changed. Spend the version on what it is.
+
+### Two agents, one repository
+
+Two sessions in one working copy is now the normal case, and it has a specific
+failure that no amount of care prevents: **the version is a property of the
+TREE, and the work is a property of a SESSION.** One session's commit landing
+mid-run forked the other's store — 30 artifacts at one version and 1 at another,
+inside a single provenance chain, with nothing saying so. On another day, four
+notebooks were built against three different source states all stamped with the
+same version number.
+
+Four rules, in order of how much they buy:
+
+1. **One session, one worktree, one store.** `git worktree add` per session,
+   pinned to a commit, with `TCAT_STORE` named after it. This is the only thing
+   here that PREVENTS the fork rather than detecting it, and the session that
+   did it was structurally immune. The other three rules exist because a session
+   deliberately holding uncommitted work cannot use it.
+2. **Never edit the analysis hub from a spoke session.** `git_sha()` reads the
+   hub, so a dirty hub refuses every notebook build in every spoke — including
+   builds that do not depend on what you changed. Hub edits get their own
+   session and land as a commit before spoke work resumes.
+3. **Announce before you bump, and before you commit into a shared tree.** A
+   social rule, so it fails the first time somebody forgets — which is why it is
+   third and not first. Keep a message channel open between concurrent
+   long-running sessions by default, not only once something has collided.
+4. **Read the other session's tree before you disagree with it.** On the one
+   occasion each session went looking at the other's working copy, each found
+   the other's latent bug and neither had found its own.
+
+The mechanical backstops, for when the rules above are not available: a
+notebook builder records the source fingerprint at the start and refuses to
+write its exhibit if the source moved during the run, and refuses to start at
+all while the hub's tree is dirty or the spoke's `__version__` does not describe
+its own source. None of these prevents anything. They convert a silent
+corruption into a loud refusal, which is the difference between finding out now
+and quoting it at a meeting.
 
 **Develop disconnected.** Use `sandbox/` or a scratch store (`--store /tmp/...`)
 until the numbers are believed. A registry full of results nobody stands behind
