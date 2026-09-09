@@ -132,7 +132,13 @@ that no test covers until CI — and some of them are not covered at all.
   one name for different procedures collide on a single id with **no error
   anywhere**)
 - flip a `hashed: true` to `false`
-- bump `standard_version` or a schema version
+- bump the **standards** version (`tcat_data.STANDARDS_VERSION`, and STANDARD.md's
+  two statements of itself) or a **schema** version. NOT the package version:
+  since 2026-09-09 those are separate numbers, and `__version__` /
+  `pyproject.toml` / `CITATION.cff` describe the distribution rather than the
+  rulebook, so a tooling fix ships without asking. One number used to serve
+  both, which made this bullet either a formality or a blocker
+- bump a spoke's `standard_version` in its manifest (which standard it targets)
 - delete or edit an artifact
 - touch anything under a `raw/` directory
 - change repository settings or branch protection
