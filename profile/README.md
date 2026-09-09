@@ -25,16 +25,54 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 |---|---|
 | **[`tcat-data-standard`](https://github.com/TransientCatalysis/tcat-data-standard)** | Defines what a valid **dataset** is. Ten document kinds, a validator, the ingestion contract. Small, boring, changes slowly — three institutions depend on it. **Public.** |
 | **`tcat-tool-standard`** | Defines what a valid **tool** is. The contract, a machine-readable declaration per tool, the registries of names that get hashed into artifact ids, and a conformance checker. Holds no science. |
+| **`tcat-campaign-standard`** | Defines what a valid **study** is: `campaign.json` as manifest and lockfile (pinned tool identities), the notebook kit and claim register, `tcat-campaign check`. |
 | **`tcat-index`** | The project research database. Registries for artifacts, datasets, samples, models, and publications, with deposit, query, catalog, and public-export interfaces. Metadata only, no bytes. |
 | **`tcat-data-spoke-template`** | Where **data** lives. Any granularity you like; layout is declarative. Start at its `START-HERE.md`. |
+| **`tcat-campaign-template`** | Start a **campaign** here: record, recipe package, a builder on the kit, CI with `tcat-campaign check`. `START-HERE.md`. |
 | **`tcat-tool-spoke-template`** | Where **code** lives. Three routes in: an unconnected sandbox, an existing tool wrapped, or a greenfield tool. Start at its `START-HERE.md`. |
 | **`tcat-kinetics`** | The kinetics **library**: mechanisms, integrators (gradientless, axially dispersed bed, error-controlled), transport, inlet reconstruction, thermochemistry. Mints nothing; every tool that imports it declares it, so its digest folds into the tool's identity. |
 | **`tcat-fit`**, **`tcat-design`**, **`tcat-spec`**, **`tcat-ingest`**, **`tcat-report`** | One **tool** each -- one CLI, one repository, one owner -- implementing the declared tool of the same name. Identity `name@<version>+<digest8>`; `<cmd> --version` prints it. |
 | **`tcat-calibrate-ms`** | The mass-spectrometer calibration chain, implementing `tcat-calibrate`. Instrument-specific by design and owned by the instrument lab. |
 | **`tcat-data-psu-coox`** | The worked **data** exemplar: 26 real PSU CO-oxidation PRBS runs, validating 47/47. Private to the org. |
-| **`tcat-analysis-coox`** | The first **campaign**: PSU's data x the tools above -> the M3/M9 evidence. Specs, pipelines, five executed notebooks, the campaign record; no tool implementations (they were extracted 2026-09-09). To be renamed `tcat-campaign-coox`. Private to the org. |
+| **`tcat-campaign-coox`** | The first **campaign**: PSU's data x the tools above -> the M3/M9 evidence. `campaign.json` pins the seven identities it ran with; five executed notebooks; no tool implementations. Private to the org. |
 
-**The two hubs are symmetric, and neither holds what it contracts about.** The data hub says what a valid dataset is; data lives in data spokes. The analysis hub says what a valid tool is; code lives in analysis spokes. A hub that accumulated the thing it defines would become the place everyone edits, and then it stops being stable enough for three institutions to build against.
+## The picture
+
+```mermaid
+flowchart LR
+  subgraph standards [three standards]
+    DS["tcat-data-standard<br/>what a valid record is"]
+    TS["tcat-tool-standard<br/>what a valid tool is"]
+    CS["tcat-campaign-standard<br/>what a valid study is"]
+  end
+  subgraph D [data spokes]
+    d1["tcat-data-psu-coox"]
+  end
+  subgraph L [libraries]
+    k["tcat-kinetics"]
+  end
+  subgraph T [tool spokes — one CLI each]
+    t1["tcat-fit"]; t2["tcat-design"]; t3["tcat-calibrate-ms"]; t4["tcat-spec · tcat-ingest · tcat-report"]
+  end
+  subgraph C [campaigns — data × tools → science]
+    c1["tcat-campaign-coox<br/>specs · pipelines · notebooks · campaign.json (lockfile)"]
+  end
+  DS -. governs .-> D
+  TS -. governs .-> T
+  CS -. governs .-> C
+  L --> T
+  D --> C
+  T --> C
+  C --> A[("artifacts + provenance<br/>(content-addressed store)")]
+  A -. deposited in .-> I["tcat-index<br/>the research database"]
+```
+
+Identity flows left to right: a library's digest folds into each tool that declares it; a tool's
+`name@version+digest8` is what a campaign pins; an artifact's id hashes the tool identity, its
+inputs and its hashed parameters. Nothing to the right of a box changes without the change
+showing in that box's identity. (`tcat-tool-standard/ARCHITECTURE.md` is the canonical drawing.)
+
+**The three standards are symmetric, and neither holds what it contracts about.** The data hub says what a valid dataset is; data lives in data spokes. The analysis hub says what a valid tool is; code lives in analysis spokes. A hub that accumulated the thing it defines would become the place everyone edits, and then it stops being stable enough for three institutions to build against.
 
 The analysis hub depends on a pinned data-standard version. **Never the reverse** — if an analysis feature seems to need a schema change, that is evidence the schema is wrong, not that the boundary should move.
 
