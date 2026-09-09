@@ -24,10 +24,10 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 | Repository | What it is |
 |---|---|
 | **[`tcat-data-standard`](https://github.com/TransientCatalysis/tcat-data-standard)** | Defines what a valid **dataset** is. Ten document kinds, a validator, the ingestion contract. Small, boring, changes slowly — three institutions depend on it. **Public.** |
-| **`tcat-analysis`** | Defines what a valid **tool** is. The contract, a machine-readable declaration per tool, the registries of names that get hashed into artifact ids, and a conformance checker. Holds no science. |
+| **`tcat-tool-standard`** | Defines what a valid **tool** is. The contract, a machine-readable declaration per tool, the registries of names that get hashed into artifact ids, and a conformance checker. Holds no science. |
 | **`tcat-index`** | The project research database. Registries for artifacts, datasets, samples, models, and publications, with deposit, query, catalog, and public-export interfaces. Metadata only, no bytes. |
 | **`tcat-data-spoke-template`** | Where **data** lives. Any granularity you like; layout is declarative. Start at its `START-HERE.md`. |
-| **`tcat-analysis-spoke-template`** | Where **code** lives. Three routes in: an unconnected sandbox, an existing tool wrapped, or a greenfield tool. Start at its `START-HERE.md`. |
+| **`tcat-tool-spoke-template`** | Where **code** lives. Three routes in: an unconnected sandbox, an existing tool wrapped, or a greenfield tool. Start at its `START-HERE.md`. |
 | **`tcat-data-psu-coox`** | The worked **data** exemplar: 26 real PSU CO-oxidation PRBS runs, validating 47/47. Private to the org. |
 | **`tcat-analysis-coox`** | The worked **analysis** exemplar: six conforming commands on that campaign, and four executed notebooks. Private to the org. |
 
@@ -43,7 +43,7 @@ The analysis hub depends on a pinned data-standard version. **Never the reverse*
 
 **Looking for data?** `tcat-index` is the registry. `catalog.json` is one flat file listing everything; `query.py` searches by sample, batch, lineage, modality, objective, or DOI, walks a provenance chain back to raw, and tells you what a revised calibration just invalidated.
 
-**Writing analysis?** Start from [`tcat-analysis-spoke-template`](https://github.com/TransientCatalysis/tcat-analysis-spoke-template) and its **`START-HERE.md`**, at whatever stage your code is in — a sandbox that is not connected to anything is a perfectly good starting point, and connecting before the interface is obvious means guessing it. `tcat-tools show <tool>` prints the interface to build against; `tcat-conform` tells you mechanically whether you match it. The checker is black-box, so a Rust or MATLAB tool is checked exactly like a Python one.
+**Writing analysis?** Start from [`tcat-tool-spoke-template`](https://github.com/TransientCatalysis/tcat-tool-spoke-template) and its **`START-HERE.md`**, at whatever stage your code is in — a sandbox that is not connected to anything is a perfectly good starting point, and connecting before the interface is obvious means guessing it. `tcat-tools show <tool>` prints the interface to build against; `tcat-conform` tells you mechanically whether you match it. The checker is black-box, so a Rust or MATLAB tool is checked exactly like a Python one.
 
 **Reading from outside the project?** Start with [`STANDARD.md`](https://github.com/TransientCatalysis/tcat-data-standard/blob/main/STANDARD.md). It is the design document, and each rule says why it exists rather than only what it requires.
 

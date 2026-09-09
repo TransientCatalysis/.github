@@ -105,7 +105,7 @@ Two consequences worth knowing:
 
 ### The hub token
 
-`tcat-analysis` is private, and a workflow's automatic `GITHUB_TOKEN` is scoped to
+`tcat-tool-standard` is private, and a workflow's automatic `GITHUB_TOKEN` is scoped to
 the repository it runs in — it cannot read another private repo in the same org,
 on any plan, however many people are members. Spoke CI therefore needs an
 **organisation-level** secret, `TCAT_HUB_TOKEN`, with read access to the org's
@@ -245,7 +245,7 @@ inventing a second description of the same thing.
 | A change touching | Reviewer | Where the name comes from |
 |---|---|---|
 | a sensor model or calibration | **instrument owner** | `stewards[].role == "instrument_owner"` in the data spoke |
-| a hashed parameter, or a capability name | a hub maintainer | `tcat-analysis` CODEOWNERS |
+| a hashed parameter, or a capability name | a hub maintainer | `tcat-tool-standard` CODEOWNERS |
 | a schema | data-hub maintainer **plus a steward from a spoke that would have to change** | `tcat-data-standard` CODEOWNERS + that spoke's `stewards` |
 | a fitting method inside one spoke | that spoke's maintainer | spoke CODEOWNERS |
 | the registry, or `_common.py` | index maintainer | `tcat-index` CODEOWNERS |
