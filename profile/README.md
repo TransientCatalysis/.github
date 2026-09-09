@@ -28,8 +28,11 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 | **`tcat-index`** | The project research database. Registries for artifacts, datasets, samples, models, and publications, with deposit, query, catalog, and public-export interfaces. Metadata only, no bytes. |
 | **`tcat-data-spoke-template`** | Where **data** lives. Any granularity you like; layout is declarative. Start at its `START-HERE.md`. |
 | **`tcat-tool-spoke-template`** | Where **code** lives. Three routes in: an unconnected sandbox, an existing tool wrapped, or a greenfield tool. Start at its `START-HERE.md`. |
+| **`tcat-kinetics`** | The kinetics **library**: mechanisms, integrators (gradientless, axially dispersed bed, error-controlled), transport, inlet reconstruction, thermochemistry. Mints nothing; every tool that imports it declares it, so its digest folds into the tool's identity. |
+| **`tcat-fit`**, **`tcat-design`**, **`tcat-spec`**, **`tcat-ingest`**, **`tcat-report`** | One **tool** each -- one CLI, one repository, one owner -- implementing the declared tool of the same name. Identity `name@<version>+<digest8>`; `<cmd> --version` prints it. |
+| **`tcat-calibrate-ms`** | The mass-spectrometer calibration chain, implementing `tcat-calibrate`. Instrument-specific by design and owned by the instrument lab. |
 | **`tcat-data-psu-coox`** | The worked **data** exemplar: 26 real PSU CO-oxidation PRBS runs, validating 47/47. Private to the org. |
-| **`tcat-analysis-coox`** | The worked **analysis** exemplar: six conforming commands on that campaign, and four executed notebooks. Private to the org. |
+| **`tcat-analysis-coox`** | The first **campaign**: PSU's data x the tools above -> the M3/M9 evidence. Specs, pipelines, five executed notebooks, the campaign record; no tool implementations (they were extracted 2026-09-09). To be renamed `tcat-campaign-coox`. Private to the org. |
 
 **The two hubs are symmetric, and neither holds what it contracts about.** The data hub says what a valid dataset is; data lives in data spokes. The analysis hub says what a valid tool is; code lives in analysis spokes. A hub that accumulated the thing it defines would become the place everyone edits, and then it stops being stable enough for three institutions to build against.
 
