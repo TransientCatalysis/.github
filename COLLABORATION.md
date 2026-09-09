@@ -138,42 +138,48 @@ that no test covers until CI — and some of them are not covered at all.
 - change repository settings or branch protection
 - add an `xfail` or a skip to a failing gate
 
-**And one an agent must do rather than avoid:** if a change alters what a tool
-outputs, bump the spoke's `__version__` and re-run `tcat-spoke fingerprint`. The
-version is hashed into every artifact id, so without the bump the store keeps
-serving pre-change results under ids that look correct. CI fails when `src/`
-changed and the version did not — the message tells you which of the two honest
-answers applies.
+**And two things an agent must do rather than avoid.** First, when a tool
+imports a `tcat-*` library, declare it in `Tool.libraries` — the library's source
+is part of the tool's identity only if it is declared, and a spoke's tests assert
+the declaration covers the measured import closure. Second, in any commit that
+touches `src/`, re-run `tcat-spoke fingerprint` and commit the result: the file
+is the index from a digest found in an artifact's provenance back to the commit
+that produced it, and CI fails when it is stale.
 
-### One bump per landing, and which digit
+### Identity derives from the source; the version is the contract
 
-The rule above says a bump is needed. It does not say how often, and answering
-"once per change" is how one spoke went **0.1.0 to 0.10.2 in five days**, three
-of those numbers stamped in a working tree and never committed — so no tree
-anybody could check out was ever at two of them.
+Since contract 0.2.0 (2026-09-08) a tool's identity is
+**`<name>@<version>+<digest8>`**. The digest is computed at run time over the
+tool's own package source with docstrings and comments stripped, combined with the
+same digest of every library it declares. A code change re-hashes exactly the
+tools whose closure includes it; a comment edit re-hashes nothing; two working
+trees with different source cannot mint one id; **and nobody bumps a version for
+a bug fix, ever.**
 
-**Bump in the commit that LANDS the work, once, however many changes it
-contains.** A version is not a changelog. What it has to be is a name for a
-state of the source somebody else can obtain.
+Why it changed: the hand-maintained version failed both ways in one week — too
+rarely (edited source at an unbumped version minted ids claiming to be the
+committed code's) and too often (one spoke went **0.1.0 to 0.10.2 in five days**,
+three of those numbers stamped in a working tree and never committed) — while the
+fingerprint was already computing the truth and using it only to check the human.
+Two sessions in one working tree then forked a store 30-to-1 under one version
+string. Identity that is a property of the source dissolves all three.
 
-**While you are iterating, change the STORE, not the version.** This is the
-substitution that removes most of the pressure. A mid-work bump is almost always
-being used to buy isolation from your own earlier results — and a fresh
-`--store` gives that for free, immediately, without re-hashing every artifact in
-the project or invalidating a colleague's cache. The fingerprint check is what
-catches a bump you forgot at landing time, so a bump you make early buys nothing
-that a directory does not.
-
-Which digit, given that EVERY bump re-hashes and the mechanism is identical for
-all three — so the size of the increment is free to carry meaning:
+So the version means one thing now: **the contract**. Bump it only when the
+surface a caller can invoke changes, in the commit that lands that change:
 
 | | when |
 |---|---|
-| **patch** | the default. The output changed, the CONTRACT did not: bug fixes, numerical corrections, a field added to a report. Anything written against the previous version still runs and still means what it meant. |
-| **minor** | the surface a caller can INVOKE grew: a new hashed parameter, a new tool, a new accepted solver or criterion value, a new artifact kind. Hashed parameters *are* the contract surface, so this is the same boundary drawn twice. |
+| **patch** | a hashed parameter's accepted values grow in a backward-compatible way, or a report gains a field. Rare. |
+| **minor** | the surface a caller can INVOKE grows: a new hashed parameter, a new accepted solver or criterion value, a new artifact kind. Hashed parameters *are* the contract surface. |
 | **major** | a break: a parameter removed, an artifact kind renamed, or an existing hashed value changing meaning. |
 
-Reserve the changelog for what changed. Spend the version on what it is.
+Output changes are not on that table. They move the digest, automatically.
+
+**While you are iterating, change the STORE, not anything else.** A fresh
+`--store` gives isolation from your own earlier results for free, immediately,
+without invalidating a colleague's cache — and since the digest already
+distinguishes your edited tree from theirs, there is nothing a version bump would
+add.
 
 ### Two agents, one repository
 
