@@ -36,42 +36,64 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 ## The picture
 
 ```mermaid
-flowchart LR
-  subgraph standards [three standards]
-    DS["tcat-data-standard<br/>what a valid record is"]
-    TS["tcat-tool-standard<br/>what a valid tool is"]
-    CS["tcat-campaign-standard<br/>what a valid study is"]
-  end
-  subgraph D [data spokes]
-    d1["tcat-data-psu-coox"]
-  end
-  subgraph L [libraries]
-    k["tcat-kinetics"]
-  end
-  subgraph T [tool spokes — one CLI each]
-    t1["tcat-fit"]; t2["tcat-design"]; t3["tcat-calibrate-ms"]; t4["tcat-spec · tcat-ingest · tcat-report"]
-  end
-  subgraph C [campaigns — data × tools → science]
-    c1["tcat-campaign-coox<br/>specs · pipelines · notebooks · campaign.json (lockfile)"]
-  end
-  DS -. governs .-> D
-  TS -. governs .-> T
-  CS -. governs .-> C
-  L --> T
-  D --> C
-  T --> C
-  C --> A[("artifacts + provenance<br/>(content-addressed store)")]
-  A -. deposited in .-> I["tcat-index<br/>the research database"]
+flowchart TB
+    DS["<b>tcat-data-standard</b><br/><i>what a valid record is</i>"]
+    TS["<b>tcat-tool-standard</b><br/><i>what a valid tool is</i>"]
+    D["<b>data spokes</b><br/>your measurements<br/>any granularity you work in"]
+    T["<b>tool spokes</b><br/>your methods<br/>one CLI each, over shared libraries"]
+    C(["<b>campaigns</b> — data × tools → science<br/><i>tcat-campaign-standard says what a valid study is;</i><br/><i>campaign.json pins the tools this one ran</i>"])
+    DS -.-> D
+    TS -.-> T
+    D ==> C
+    T ==> C
+    classDef standard fill:#E8EEF7,stroke:#41618F,color:#101010
+    classDef spoke fill:#EAF4EA,stroke:#47804A,color:#101010
+    classDef campaign fill:#FBF1DF,stroke:#A97C22,color:#101010
+    class DS,TS standard
+    class D,T spoke
+    class C campaign
 ```
 
-Identity flows left to right: a library's digest folds into each tool that declares it; a tool's
-`name@version+digest8` is what a campaign pins; an artifact's id hashes the tool identity, its
-inputs and its hashed parameters. Nothing to the right of a box changes without the change
-showing in that box's identity. (`tcat-tool-standard/ARCHITECTURE.md` is the canonical drawing.)
+The same drawing for a terminal, a slide, or a notebook:
 
-**The three standards are symmetric, and neither holds what it contracts about.** The data hub says what a valid dataset is; data lives in data spokes. The analysis hub says what a valid tool is; code lives in analysis spokes. A hub that accumulated the thing it defines would become the place everyone edits, and then it stops being stable enough for three institutions to build against.
+```
+       tcat-data-standard                          tcat-tool-standard
+         a valid RECORD                               a valid TOOL
+                │                                           │
+                ▼                                           ▼
+           data spokes                                 tool spokes
+       your measurements,                             your methods,
+         any granularity                              one CLI each
+                │                                           │
+                └───────────────► campaigns ◄───────────────┘
+                           data × tools → science
+                       campaign.json pins what it ran
+```
 
-The analysis hub depends on a pinned data-standard version. **Never the reverse** — if an analysis feature seems to need a schema change, that is evidence the schema is wrong, not that the boundary should move.
+*Dotted: the standard each side conforms to. Solid: measurements and methods meeting in a study.*
+
+**The top row is the part that must not move.** A standard per kind of thing, and **none of them
+holds the thing itself** — the data standard holds no data, the tool standard holds no tools, the
+campaign standard holds no science. A standard that accumulated what it defines would become the
+place everyone edits, and then it is no longer something three institutions can build against.
+
+**The bottom row is the part that is yours.** A data spoke is any repository whose records
+validate, at whatever granularity you actually work in; a tool spoke is one CLI over shared
+libraries. Nobody has to agree on how you work — only on what a valid record and a valid tool
+look like. **Standardisation where it buys interoperability, freedom everywhere else**, and the
+diagram is symmetric because the two sides genuinely are: same pattern, one standard and many
+spokes, on data and on methods alike.
+
+**Campaigns are where the two halves meet, and that join is the point: it decouples methods from
+science.** A method is written once, in its own repository, and reused by every campaign that
+wants it; a campaign swaps a method — or a dataset — without touching either. What a campaign
+adds is the record of which was combined with which: `campaign.json` pins the exact identity of
+every tool it ran, so a study stays reproducible without the tools having to be frozen.
+
+Off this picture deliberately, because it is the idea rather than the wiring: **libraries** (code
+several tools import, minting nothing, folded into each tool's identity), the content-addressed
+**store** the artifacts land in, and **`tcat-index`**, the registry that records who has what.
+`tcat-tool-standard/ARCHITECTURE.md` carries this drawing and the detailed one beside it.
 
 ## Where to start
 
