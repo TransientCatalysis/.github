@@ -81,7 +81,7 @@ The analysis hub depends on a pinned data-standard version. **Never the reverse*
 
 **Looking for data?** `tcat-index` is the registry. `catalog.json` is one flat file listing everything; `query.py` searches by sample, batch, lineage, modality, objective, or DOI, walks a provenance chain back to raw, and tells you what a revised calibration just invalidated.
 
-**Writing analysis?** Start from [`tcat-tool-spoke-template`](https://github.com/TransientCatalysis/tcat-tool-spoke-template) and its **`START-HERE.md`**, at whatever stage your code is in — a sandbox that is not connected to anything is a perfectly good starting point, and connecting before the interface is obvious means guessing it. `tcat-tools show <tool>` prints the interface to build against; `tcat-conform` tells you mechanically whether you match it. The checker is black-box, so a Rust or MATLAB tool is checked exactly like a Python one.
+**Writing a tool?** `tcat-spoke init --kind tool <your-repo>` writes a complete, conforming skeleton from the installed tool standard; replace the example body. Read its `START-HERE.md` first -- the honest first question is whether to connect anything yet or stay in `sandbox/`.
 
 **Reading from outside the project?** Start with [`STANDARD.md`](https://github.com/TransientCatalysis/tcat-data-standard/blob/main/STANDARD.md). It is the design document, and each rule says why it exists rather than only what it requires.
 
