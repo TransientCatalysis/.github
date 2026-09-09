@@ -27,9 +27,6 @@ The current focus is oxidative dehydrogenation of light alkanes over supported v
 | **`tcat-tool-standard`** | Defines what a valid **tool** is. The contract, a machine-readable declaration per tool, the registries of names that get hashed into artifact ids, and a conformance checker. Holds no science. |
 | **`tcat-campaign-standard`** | Defines what a valid **study** is: `campaign.json` as manifest and lockfile (pinned tool identities), the notebook kit and claim register, `tcat-campaign check`. |
 | **`tcat-index`** | The project research database. Registries for artifacts, datasets, samples, models, and publications, with deposit, query, catalog, and public-export interfaces. Metadata only, no bytes. |
-| **`tcat-data-spoke-template`** | Where **data** lives. Any granularity you like; layout is declarative. Start at its `START-HERE.md`. |
-| **`tcat-campaign-template`** | Start a **campaign** here: record, recipe package, a builder on the kit, CI with `tcat-campaign check`. `START-HERE.md`. |
-| **`tcat-tool-spoke-template`** | Where **code** lives. Three routes in: an unconnected sandbox, an existing tool wrapped, or a greenfield tool. Start at its `START-HERE.md`. |
 | **`tcat-kinetics`** | The kinetics **library**: mechanisms, integrators (gradientless, axially dispersed bed, error-controlled), transport, inlet reconstruction, thermochemistry. Mints nothing; every tool that imports it declares it, so its digest folds into the tool's identity. |
 | **`tcat-fit`**, **`tcat-design`**, **`tcat-spec`**, **`tcat-ingest`**, **`tcat-report`** | One **tool** each -- one CLI, one repository, one owner -- implementing the declared tool of the same name. Identity `name@<version>+<digest8>`; `<cmd> --version` prints it. |
 | **`tcat-calibrate-ms`** | The mass-spectrometer calibration chain, implementing `tcat-calibrate`. Instrument-specific by design and owned by the instrument lab. |
@@ -80,7 +77,7 @@ The analysis hub depends on a pinned data-standard version. **Never the reverse*
 
 **New here, and not sure?** Read [`COLLABORATION.md`](https://github.com/TransientCatalysis/.github/blob/main/COLLABORATION.md) — who owns what, what a pull request has to carry, and how to coach an agent working in these repositories. Then pick one of the two tracks below; each is one page and ends at a working spoke.
 
-**Depositing data?** Create a repository from [`tcat-data-spoke-template`](https://github.com/TransientCatalysis/tcat-data-spoke-template) and open its **`START-HERE.md`** — four steps, ending at `tcat-validate all .` clean. `tcat-spoke init` writes the manifest, your CODEOWNERS and your CITATION.cff, so there is nothing to hand-edit. **Granularity is yours** — per lab, per student, per campaign, or a monorepo; the registry records which spoke holds what, so re-carving later is a metadata update rather than a migration. The one shape worth avoiding is one repository per *dataset*, because a repository is a unit of review and access control and neither varies per dataset. Then register what you deposited in `tcat-index`, which is what makes it findable — an artifact id is a hash, so nothing can discover it otherwise.
+**Depositing data?** `pip install git+https://github.com/TransientCatalysis/tcat-data-standard.git`, then `tcat-spoke init --kind data <your-repo>` -- the skeleton ships inside the standard; there is no template to clone. `--kind tool` and `tcat-campaign init` do the same for a tool spoke and a campaign.
 
 **Looking for data?** `tcat-index` is the registry. `catalog.json` is one flat file listing everything; `query.py` searches by sample, batch, lineage, modality, objective, or DOI, walks a provenance chain back to raw, and tells you what a revised calibration just invalidated.
 
