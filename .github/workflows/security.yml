@@ -1,0 +1,163 @@
+# The org's security gate, defined ONCE and called by every tcat-* repository.
+#
+# It lives here rather than being copied into fifteen repositories because a
+# copied check drifts, and the one that drifts is always the one nobody is
+# looking at -- the same reason CODEOWNERS is generated from the stewards
+# block rather than written by hand. A repository opts in with six lines:
+#
+#     security:
+#       uses: TransientCatalysis/.github/.github/workflows/security.yml@main
+#
+# Nothing here installs the project or needs a token. Both checks read source
+# only, which is what lets this run on a fork's pull request safely.
+name: security
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: No character a reviewer cannot see
+        # A worm that hides its payload in invisible codepoints survives review
+        # precisely because the diff looks empty: the parser sees the
+        # characters, the human does not. This is the GlassWorm family's
+        # distinguishing trick, and it is cheap to refuse outright.
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess, sys, unicodedata
+
+          BANNED = {
+              **{c: "zero-width / directional mark" for c in range(0x200B, 0x2010)},
+              **{c: "bidi override"                 for c in range(0x202A, 0x202F)},
+              **{c: "invisible operator"            for c in range(0x2060, 0x2065)},
+              **{c: "bidi isolate"                  for c in range(0x2066, 0x206A)},
+              **{c: "variation selector"            for c in range(0xFE00, 0xFE10)},
+              **{c: "unicode tag character"         for c in range(0xE0000, 0xE0080)},
+              0x00AD: "soft hyphen",
+              0xFEFF: "zero-width no-break space (not a leading BOM)",
+          }
+          TEXT = (".py", ".js", ".ts", ".json", ".toml", ".yml", ".yaml", ".md",
+                  ".cfg", ".txt", ".sh", ".ipynb", ".drawio", ".csv", ".tmpl",
+                  ".cff", ".in")
+
+          def tracked():
+              out = subprocess.run(["git", "ls-files", "-z"],
+                                   capture_output=True, text=True, check=True)
+              return [p for p in out.stdout.split("\0") if p.endswith(TEXT)]
+
+          def scan(path):
+              try:
+                  text = open(path, encoding="utf-8").read()
+              except (UnicodeDecodeError, OSError):
+                  return []          # binary or unreadable: not this gate's business
+              hits = []
+              for i, ch in enumerate(text):
+                  cp = ord(ch)
+                  why = BANNED.get(cp)
+                  if why is None:
+                      continue
+                  # U+FE0F earns its place after an emoji and nowhere else --
+                  # after ASCII it has no rendering job and is doing something
+                  # other than what it says.
+                  if cp == 0xFE0F and i and ord(text[i - 1]) > 0x2000:
+                      continue
+                  if cp == 0xFEFF and i == 0:
+                      continue       # a leading BOM is an encoding, not a payload
+                  hits.append((text.count("\n", 0, i) + 1, cp, why))
+              return hits
+
+          files = tracked()
+          if not files:
+              print("::error::scanned no files; the gate would pass vacuously")
+              sys.exit(1)
+          bad = 0
+          for path in files:
+              for line, cp, why in scan(path):
+                  bad += 1
+                  name = unicodedata.name(chr(cp), "unnamed")
+                  print(f"::error file={path},line={line}::U+{cp:04X} {name} -- "
+                        f"{why}. A character a reviewer cannot see may not be in "
+                        f"tracked source.")
+          print(f"scanned {len(files)} tracked text files; {bad} hidden characters")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: AGENTS.md is the generated one
+        # The agent instructions are generated from one template in the .github
+        # repository, for the reason CODEOWNERS is generated from the stewards
+        # block: fifteen hand-maintained copies drift, and the copy that drifts
+        # is the one nobody is looking at. A hand-edit here is not a style
+        # problem -- it is an agent somewhere reading a different rule set.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: TransientCatalysis/.github
+          path: .org-tooling
+
+      - name: Check it
+        run: python .org-tooling/scripts/generate_agents_md.py --check --repo .
+
+      - name: No workflow hands a credential to somebody else's code
+        # Two rules, both of them regressions this org has actually had.
+        #
+        # 1. `pip install <url>` runs that project's build backend as arbitrary
+        #    code. A third-party URL in a step that also carries a token is one
+        #    upstream commit away from reading every private repo in the org,
+        #    because TCAT_HUB_TOKEN is organisation-level by design.
+        # 2. A ${{ }} expansion inside `run:` is pasted into the script TEXT
+        #    before bash parses it, so file content or a branch name becomes a
+        #    command. Bind it to `env:` and quote it in shell instead.
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet "pyyaml==6.0.2"
+          python - <<'PY'
+          import pathlib, re, sys, yaml
+
+          MARKER = "$" + "{{"          # not written literally: Actions would expand it
+          problems = []
+          workflows = sorted(pathlib.Path(".github/workflows").glob("*.y*ml"))
+          if not workflows:
+              print("no workflows in this repository; nothing to lint")
+              sys.exit(0)
+
+          for wf in workflows:
+              doc = yaml.safe_load(wf.read_text()) or {}
+              for job_name, job in (doc.get("jobs") or {}).items():
+                  for step in (job.get("steps") or []):
+                      run = step.get("run") or ""
+                      where = f"{wf}: job '{job_name}', step '{step.get('name', '?')}'"
+                      env = {**(doc.get("env") or {}), **(job.get("env") or {}),
+                             **(step.get("env") or {})}
+                      secret = [k for k, v in env.items()
+                                if "secret" in str(v).lower() or "TOKEN" in k.upper()]
+                      third = [u for u in re.findall(r'(?:git\+)?https://[^\s"\']+', run)
+                               if "github.com/" in u
+                               and "github.com/TransientCatalysis/" not in u
+                               and "pip install" in run]
+                      if third and secret:
+                          problems.append(
+                              f"{where}: installs {third[0]} while {secret[0]} is in "
+                              f"scope. Move the third-party install to its own step "
+                              f"with no token, and pin it to a commit.")
+                      for expr in re.findall(re.escape(MARKER) + r'[^}]+\}\}', run):
+                          problems.append(
+                              f"{where}: {expr} is expanded into the script text. "
+                              f"Bind it to env: and reference it as a quoted shell "
+                              f"variable.")
+
+          for p in problems:
+              print(f"::error::{p}")
+          print(f"linted {len(workflows)} workflow files; {len(problems)} problems")
+          sys.exit(1 if problems else 0)
+          PY
