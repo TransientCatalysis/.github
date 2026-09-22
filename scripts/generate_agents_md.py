@@ -47,7 +47,7 @@ KINDS = {
 OVERRIDE = {
     "tcat-data-standard": "hub-data", "tcat-tool-standard": "hub-tool",
     "tcat-campaign-standard": "hub-campaign", "tcat-index": "registry",
-    "tcat-campaign-coox": "campaign",
+    "tcat-campaign-coox": "campaign", "tcat-campaign-ir": "campaign",
 }
 
 BODY = """
