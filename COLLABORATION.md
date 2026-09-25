@@ -85,6 +85,35 @@ A PR also carries:
 - **Blast radius.** Which spokes have to do something. "None" is the preferred
   answer.
 
+### Cross-repository changes
+
+**Use the same branch name in every repository the change touches.** On a pull
+request, CI installs each sibling (`tcat-data-standard`, the hub, libraries,
+tools) from a branch of the same name when that branch exists, and from `main`
+otherwise. So `tcat-design` and `tcat-campaign-coox` PRs on branch `fix-x` test
+against each other's `fix-x` and both go green before either merges. The job log
+says which siblings came from a branch (`::notice::… installed from branch …`).
+Every conform/validate workflow defines this as `tcat_ref` in a step right after
+checkout.
+
+Three things to know:
+
+- **Merge order still matters on `main`.** A push to `main` installs siblings
+  from `main`. Merge the upstream PR first (the library or tool before the
+  campaign that calls it), or merge them back to back.
+- **Pick a specific branch name.** A generic name like `fix` can match an
+  unrelated branch elsewhere. The notice line in the log is how you would spot it.
+- **A missing branch is `main`, never a fallback.** The existence check uses
+  `git ls-remote --exit-code`. CI never retries on `main` after a failed branch
+  install, because that would report green on code nobody asked about.
+
+**Campaign lockfile bumps are found by a bot.** When a pinned tool's identity
+moves on `main`, each campaign's `repin` workflow (daily, or run it by hand from
+the Actions tab) re-pins against `main`. It pushes branch `bot/repin` and keeps
+one open issue labelled `repin`, with a one-click link to open the PR and the list
+of notebooks to re-execute. It does not open the PR itself: letting workflow
+tokens create PRs would also let them approve them.
+
 ## 4. Branch protection, and the rights you do not have
 
 Both setup guides used to say "make it a required status check" and neither said
