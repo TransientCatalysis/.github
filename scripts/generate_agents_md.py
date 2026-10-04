@@ -234,6 +234,10 @@ def kind_of(repo: pathlib.Path) -> str | None:
     manifest = repo / ".tcat-spoke.json"
     if manifest.is_file():
         return json.loads(manifest.read_text()).get("kind")
+    # A campaign's manifest is its campaign.json (tcat-campaign-standard), so a
+    # campaign created by `tcat-spoke init --kind campaign` needs no entry above.
+    if (repo / "campaign.json").is_file():
+        return "campaign"
     return None
 
 
