@@ -103,6 +103,10 @@ Three things to know:
   campaign that calls it), or merge them back to back.
 - **Pick a specific branch name.** A generic name like `fix` can match an
   unrelated branch elsewhere. The notice line in the log is how you would spot it.
+- **Dependabot branches always install siblings from `main`.** Dependabot gives
+  every repository the same branch names (`dependabot/github_actions/actions/checkout-7.0.1`),
+  so matching them would test one bump against another repository's stale bump
+  branch. `tcat_ref` returns `main` for any `dependabot/*` branch.
 - **A missing branch is `main`, never a fallback.** The existence check uses
   `git ls-remote --exit-code`. CI never retries on `main` after a failed branch
   install, because that would report green on code nobody asked about.
