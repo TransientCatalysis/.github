@@ -75,6 +75,12 @@ the moment it is added**, not after.
   nothing would notice it moving.
 - **A licence is settled before the import lands**, per `IP-DILIGENCE.md`. After
   it lands, a signed attestation is already false.
+- **Only GitHub's own actions merge themselves.** `dependabot-automerge.yml`
+  queues a merge for a minor or patch bump of `actions/*` and nothing else, and
+  the merge still waits for the required checks. A third-party action or a major
+  version waits for a human: an action bump is new code running beside the org
+  token. Python dependencies get security updates only; a version-update PR
+  raised a `>=` floor that nothing caps, so it changed nothing CI tests.
 
 This is also where worms live. The GlassWorm family hides its payload in
 codepoints that render as nothing, so the diff a reviewer approves is not the
