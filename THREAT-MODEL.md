@@ -115,7 +115,7 @@ Worth stating plainly, because two of these are easy to get wrong:
 
 | Boundary | Where it is |
 |---|---|
-| **Unreleased partner data** | **Not** at the edge of the organisation. PSU's data goes no further than this org without PSU's say-so, and releasing anything in `tcat-data-psu-coox` is PSU's call and nobody else's. Org membership is not permission. |
+| **Unreleased partner data** | **Public release**, not the edge of the organisation. Anything short of public release -- copying, mirroring, storing or processing PSU's data for the project's analysis, on project compute (e.g. the CHM260137 Jetstream2 VMs), collaborators' machines or the project's Dataerai space -- is pre-approved (PSU, 2026-10-10). Making a repository public, depositing, or publishing or openly posting the data or numbers derived from it is PSU's call and nobody else's; no repository setting or agent can make that call. |
 | **Artifact bytes** | The checksum, verified locally. Not the server, not the transport, not the filename -- the platform verifies in a different hash function, so its assurance is not in our units. |
 | **Artifact identity** | The source digest. Two trees with different source cannot mint one id; a comment edit re-hashes nothing. |
 | **What may reach `main`** | Repository settings, which no commit and no agent can change. |
