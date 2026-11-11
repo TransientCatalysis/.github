@@ -31,7 +31,7 @@ cause a loss that cannot be undone:
 - Unreleased partner data cannot be published by accident -- changing a
   repository's visibility is an owner's action, not a member's.
 - History cannot be lost -- `main` refuses a force-push and a deletion
-  everywhere, and the repositories that three institutions build against
+  everywhere, and the repositories that everyone builds against
   additionally require a pull request with a green gate.
 - A mistake inside a spoke is cheap, recoverable, and therefore allowed. That is
   the point: make the reversible things easy so the irreversible ones can be
@@ -65,16 +65,17 @@ the machine doing the installing, before a single test runs. A dependency is
 therefore code execution at install time, and it must be treated as such **at
 the moment it is added**, not after.
 
-- **A third-party install never shares a step with a credential.** Our
-  organisation token is org-level by design, so it reads every private
-  repository here; a step that holds it while running somebody else's build
-  script is one upstream commit away from losing all of them. CI refuses this
+- **A third-party install never shares a step with a credential.** The
+  standards and tools are public and need none, but a workflow that reads a
+  private data spoke or campaign holds an organisation-level token, which reads
+  every private repository here; a step that holds it while running somebody
+  else's build script is one upstream commit away from losing all of them. CI refuses this
   shape now rather than trusting us to remember it.
 - **A third-party dependency is pinned to a commit**, for the reason a manifest
   entry carries a checksum: `@main` is whatever that branch points at today, and
   nothing would notice it moving.
-- **A licence is settled before the import lands**, per `IP-DILIGENCE.md`. After
-  it lands, a signed attestation is already false.
+- **A licence is settled before the import lands.** After it lands, any
+  statement that we hold sufficient rights to every component is already false.
 - **Only GitHub's own actions merge themselves.** `dependabot-automerge.yml`
   queues a merge for a minor or patch bump of `actions/*` and nothing else, and
   the merge still waits for the required checks. A third-party action or a major
@@ -115,7 +116,7 @@ Worth stating plainly, because two of these are easy to get wrong:
 
 | Boundary | Where it is |
 |---|---|
-| **Unreleased partner data** | **Public release**, not the edge of the organisation. Anything short of public release -- copying, mirroring, storing or processing PSU's data for the project's analysis, on project compute (e.g. the CHM260137 Jetstream2 VMs), collaborators' machines or the project's Dataerai space -- is pre-approved (PSU, 2026-10-10). Making a repository public, depositing, or publishing or openly posting the data or numbers derived from it is PSU's call and nobody else's; no repository setting or agent can make that call. |
+| **Unreleased partner data** | **Public release**, not the edge of the organisation. Anything short of public release -- copying, mirroring, storing or processing a lab's unreleased measurements for the project's analysis, on project compute, collaborators' machines or the project's data platform -- is pre-approved by the lab that owns them. Making a repository public, depositing, or publishing or openly posting the data or numbers derived from it is the owning lab's call and nobody else's; no repository setting or agent can make that call. |
 | **Artifact bytes** | The checksum, verified locally. Not the server, not the transport, not the filename -- the platform verifies in a different hash function, so its assurance is not in our units. |
 | **Artifact identity** | The source digest. Two trees with different source cannot mint one id; a comment edit re-hashes nothing. |
 | **What may reach `main`** | Repository settings, which no commit and no agent can change. |
@@ -125,7 +126,7 @@ Worth stating plainly, because two of these are easy to get wrong:
 
 Saying so is what keeps the list above honest.
 
-- **A malicious org member.** Nine people, all named, all known to the PIs. The
+- **A malicious org member.** A small membership, all named, all known to the PIs. The
   settings make the worst accidents hard; they do not make a determined insider
   hard, and nothing short of per-repository access control would.
 - **A compromised laptop.** If an endpoint is owned, its credentials are owned.
@@ -140,6 +141,6 @@ Saying so is what keeps the list above honest.
 
 If you find a security problem -- in this code, in a dependency, or in how the
 organisation is configured -- open an issue on the `.github` repository, or
-email the GT lead directly if it should not be public first. There is no bounty,
+email the maintainer named in that repository's `SECURITY.md` directly if it should not be public first. There is no bounty,
 no disclosure deadline, and no wrong way to report. A false alarm costs a
 conversation; the alternative costs a project.

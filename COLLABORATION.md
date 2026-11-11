@@ -24,8 +24,9 @@ copy that is wrong is always the one nobody is looking at.
 | `analysis_owner` | Answers for the code in an analysis spoke. |
 | `pi` | Escalation. Not a day-to-day reviewer. |
 
-`instrument_owner` is the one that carries weight: the MS sensor model is the
-Rioux lab's to approve and the XAS model is Frenkel's — *"reviewed by whoever
+`instrument_owner` is the one that carries weight: a mass-spectrometer sensor
+model is for the lab that runs that spectrometer to approve, and an XAS model
+for the group at the beamline — *"reviewed by whoever
 owns the instrument, not by whoever is available"* (`PROMOTION.md`). The
 generated CODEOWNERS gives that person the `calibrations/` directory, which is
 what turns the sentence into a review GitHub will require.
@@ -90,7 +91,7 @@ A PR also carries:
 **Use the same branch name in every repository the change touches.** On a pull
 request, CI installs each sibling (`tcat-data-standard`, the hub, libraries,
 tools) from a branch of the same name when that branch exists, and from `main`
-otherwise. So `tcat-design` and `tcat-campaign-coox` PRs on branch `fix-x` test
+otherwise. So PRs to a tool and to a campaign that calls it, both on branch `fix-x`, test
 against each other's `fix-x` and both go green before either merges. The job log
 says which siblings came from a branch (`::notice::… installed from branch …`).
 Every conform/validate workflow defines this as `tcat_ref` in a step right after
@@ -126,7 +127,7 @@ rights.
 
 **You should not have to arrange it.** The org applies a ruleset to `tcat-*`
 repositories: no force-push and no deletion anywhere, and on the three
-standards, `tcat-index` and the two exemplars additionally a pull request with
+standards and the shared exemplars additionally a pull request with
 the gate job green. If `main` in your repository is unprotected, **open an issue
 on the `.github` repository** rather than hunting through settings.
 
@@ -150,16 +151,18 @@ Three consequences worth knowing:
 
 ### The hub token
 
-`tcat-tool-standard` is private, and a workflow's automatic `GITHUB_TOKEN` is scoped to
-the repository it runs in — it cannot read another private repo in the same org,
-on any plan, however many people are members. Spoke CI therefore needs an
-**organisation-level** secret, `TCAT_HUB_TOKEN`, with read access to the org's
-repositories.
+The standards, the libraries and the tools are public, and installing them in
+CI needs no credential. The token exists for what is not public: a workflow's
+automatic `GITHUB_TOKEN` is scoped to the repository it runs in — it cannot read
+another private repo in the same org, on any plan, however many people are
+members. A campaign or tool that depends on a **private** repository (an
+unreleased data spoke, say) therefore needs an **organisation-level** secret,
+`TCAT_HUB_TOKEN`, with read access to the org's repositories.
 
-Organisation-level, deliberately: a new spoke inherits it with no setup. Every
-analysis-side workflow already reads it and fails with an actionable message when
-it is absent. When the hub goes public the secret can be deleted and nothing else
-changes.
+Organisation-level, deliberately: a new spoke inside the org inherits it with no
+setup. A repository outside the org gets no org secrets; it needs the secret
+only if it depends on something private, and then as a repository secret of the
+same name.
 
 ## 5. Coaching an agent in these repositories
 
@@ -289,7 +292,7 @@ you run. `PROMOTION.md` has the four levels.
 **When a gate fails, the agent opens an issue with the output. It does not weaken
 the gate.** Three temptations this project has already had to defend against, by
 name: relaxing `tcat-conform`; relaxing `compile_axial_integrator`'s Courant
-refusal (fragile point 17 says in terms *"do not relax that check to 'just try
+refusal (the note beside it says in terms *"do not relax that check to 'just try
 it'"*); and "simplifying" the stdin-only-on-`--in -` rule, which has a regression
 test and an explicit note not to.
 
