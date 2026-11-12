@@ -1,0 +1,17 @@
+# Written by hand: this repository holds the org generator rather than consuming
+# it, and has no Python package. Same policy as every generated copy --
+# third-party actions are pinned to commit SHAs, dependabot owns the bumps,
+# monthly and grouped (minor and patch in one PR, a major on its own).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      actions-major:
+        patterns: ["*"]
+        update-types: ["major"]
