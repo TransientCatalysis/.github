@@ -114,16 +114,24 @@ jobs:
         # 1. `pip install <url>` runs that project's build backend as arbitrary
         #    code. A third-party URL in a step that also carries a token is one
         #    upstream commit away from reading every private repo in the org,
-        #    because TCAT_HUB_TOKEN is organisation-level by design.
+        #    because TCAT_HUB_TOKEN is organisation-level by design. The calling
+        #    repository's OWN account counts as first-party too: a campaign in a
+        #    personal account (`tcat-spoke init --owner`) carries its owner's
+        #    repository secret for its owner's private tools, and nobody else's.
         # 2. A ${{ }} expansion inside `run:` is pasted into the script TEXT
         #    before bash parses it, so file content or a branch name becomes a
         #    command. Bind it to `env:` and quote it in shell instead.
+        env:
+          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           python -m pip install --quiet "pyyaml==6.0.2"
           python - <<'PY'
-          import pathlib, re, sys, yaml
+          import os, pathlib, re, sys, yaml
 
+          FIRST_PARTY = {"github.com/transientcatalysis/"}
+          if os.environ.get("OWNER"):
+              FIRST_PARTY.add(f"github.com/{os.environ['OWNER'].lower()}/")
           MARKER = "$" + "{{"          # not written literally: Actions would expand it
           problems = []
           workflows = sorted(pathlib.Path(".github/workflows").glob("*.y*ml"))
@@ -143,7 +151,7 @@ jobs:
                                 if "secret" in str(v).lower() or "TOKEN" in k.upper()]
                       third = [u for u in re.findall(r'(?:git\+)?https://[^\s"\']+', run)
                                if "github.com/" in u
-                               and "github.com/TransientCatalysis/" not in u
+                               and not any(f in u.lower() for f in FIRST_PARTY)
                                and "pip install" in run]
                       if third and secret:
                           problems.append(
