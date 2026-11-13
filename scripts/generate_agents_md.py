@@ -15,8 +15,11 @@ re-run; never edit a generated AGENTS.md.
     python org-profile/scripts/generate_agents_md.py            # write
     python org-profile/scripts/generate_agents_md.py --check    # CI: refuse drift
 
-Folding this into `tcat-spoke init` / `tcat-spoke check`, so a NEW spoke is
-born with it, is the durable version of this and is owed.
+A byte-identical copy ships in tcat-data-standard as `tcat_data/org_files.py`,
+so `tcat-spoke init` writes these files into a new repository and it passes the
+org security gate on its first run. A test there fails when the two copies
+differ; edit this file, then copy it over. Standard library only, because the
+security gate runs it from a bare checkout with nothing installed.
 """
 from __future__ import annotations
 
@@ -314,6 +317,38 @@ def render(repo: pathlib.Path) -> str | None:
     return f"{HEADER}# AGENTS.md -- {repo.name}\n{BODY.format(what=what, gate=gate)}"
 
 
+def files_for(repo: pathlib.Path) -> list[tuple[pathlib.Path, str]] | None:
+    """Every generated file for one repository, as (path, content); None when the
+    repository has no recognised kind. The one definition both the writer and the
+    check use, and what `tcat-spoke init` calls."""
+    want = render(repo)
+    if want is None:
+        return None
+    dependabot = DEPENDABOT.format(
+        pip=DEPENDABOT_PIP if (repo / "pyproject.toml").is_file() else "")
+    return [(repo / "AGENTS.md", want),
+            (repo / "CLAUDE.md", CLAUDE_MD),
+            (repo / "SECURITY.md", SECURITY_MD),
+            (repo / ".github/dependabot.yml", dependabot),
+            (repo / ".github/workflows/dependabot-automerge.yml", AUTOMERGE.format())]
+
+
+def drifted(repo: pathlib.Path) -> list[pathlib.Path]:
+    """Generated files that are missing or differ. Reads only; writes nothing."""
+    return [path for path, content in (files_for(repo) or [])
+            if not path.is_file() or path.read_text() != content]
+
+
+def write(repo: pathlib.Path) -> list[pathlib.Path]:
+    """Write every generated file for one repository; returns the paths written."""
+    out = []
+    for path, content in files_for(repo) or []:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+        out.append(path)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--check", action="store_true",
@@ -335,27 +370,17 @@ def main() -> int:
               f"refusing to report success having checked nothing")
         return 1
 
-    drifted, written, skipped = [], 0, []
+    stale, written, skipped = [], 0, []
     for repo in repos:
-        want = render(repo)
-        if want is None:
+        if files_for(repo) is None:
             skipped.append(repo.name)
             continue
-        dependabot = DEPENDABOT.format(
-            pip=DEPENDABOT_PIP if (repo / "pyproject.toml").is_file() else "")
-        for path, content in ((repo / "AGENTS.md", want),
-                              (repo / "CLAUDE.md", CLAUDE_MD),
-                              (repo / "SECURITY.md", SECURITY_MD),
-                              (repo / ".github/dependabot.yml", dependabot),
-                              (repo / ".github/workflows/dependabot-automerge.yml",
-                               AUTOMERGE.format())):
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if args.check:
-                if not path.is_file() or path.read_text() != content:
-                    drifted.append(str(path.relative_to(args.root)))
-            else:
-                path.write_text(content)
-                written += 1
+        if args.check:
+            # A check reads and nothing else: it used to create .github/workflows/
+            # in the repository it was checking.
+            stale += [str(p.relative_to(args.root)) for p in drifted(repo)]
+        else:
+            written += len(write(repo))
 
     for name in skipped:
         print(f"note: {name} has no recognised kind; skipped")
@@ -364,13 +389,13 @@ def main() -> int:
               f"the check would pass vacuously")
         return 1
     if args.check:
-        for path in drifted:
+        for path in stale:
             print(f"::error file={path}::out of step with the generator. "
                   f"Run `python org-profile/scripts/generate_agents_md.py` "
                   f"and commit the result.")
         print(f"checked {len(repos) - len(skipped)} repositories; "
-              f"{len(drifted)} files drifted")
-        return 1 if drifted else 0
+              f"{len(stale)} files drifted")
+        return 1 if stale else 0
     print(f"wrote {written} files across {len(repos) - len(skipped)} repositories")
     return 0
 

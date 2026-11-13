@@ -1,0 +1,12 @@
+name: tcat-ref
+description: >
+  Write tcat_ref.sh into $RUNNER_TEMP, defining `tcat_ref <repository>`: the branch
+  of a sibling TransientCatalysis repository to install on this run (the same-named
+  branch on a pull request when it exists, else main). One definition for every
+  repository's CI; it used to be pasted into each workflow and drifted.
+runs:
+  using: composite
+  steps:
+    - name: Write tcat_ref.sh
+      shell: bash
+      run: cp "$GITHUB_ACTION_PATH/tcat_ref.sh" "$RUNNER_TEMP/tcat_ref.sh"

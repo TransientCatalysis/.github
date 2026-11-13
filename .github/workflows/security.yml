@@ -22,9 +22,9 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
 
@@ -100,7 +100,7 @@ jobs:
         # block: fifteen hand-maintained copies drift, and the copy that drifts
         # is the one nobody is looking at. A hand-edit here is not a style
         # problem -- it is an agent somewhere reading a different rule set.
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: TransientCatalysis/.github
           path: .org-tooling
@@ -114,16 +114,24 @@ jobs:
         # 1. `pip install <url>` runs that project's build backend as arbitrary
         #    code. A third-party URL in a step that also carries a token is one
         #    upstream commit away from reading every private repo in the org,
-        #    because TCAT_HUB_TOKEN is organisation-level by design.
+        #    because TCAT_HUB_TOKEN is organisation-level by design. The calling
+        #    repository's OWN account counts as first-party too: a campaign in a
+        #    personal account (`tcat-spoke init --owner`) carries its owner's
+        #    repository secret for its owner's private tools, and nobody else's.
         # 2. A ${{ }} expansion inside `run:` is pasted into the script TEXT
         #    before bash parses it, so file content or a branch name becomes a
         #    command. Bind it to `env:` and quote it in shell instead.
+        env:
+          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           python -m pip install --quiet "pyyaml==6.0.2"
           python - <<'PY'
-          import pathlib, re, sys, yaml
+          import os, pathlib, re, sys, yaml
 
+          FIRST_PARTY = {"github.com/transientcatalysis/"}
+          if os.environ.get("OWNER"):
+              FIRST_PARTY.add(f"github.com/{os.environ['OWNER'].lower()}/")
           MARKER = "$" + "{{"          # not written literally: Actions would expand it
           problems = []
           workflows = sorted(pathlib.Path(".github/workflows").glob("*.y*ml"))
@@ -143,7 +151,7 @@ jobs:
                                 if "secret" in str(v).lower() or "TOKEN" in k.upper()]
                       third = [u for u in re.findall(r'(?:git\+)?https://[^\s"\']+', run)
                                if "github.com/" in u
-                               and "github.com/TransientCatalysis/" not in u
+                               and not any(f in u.lower() for f in FIRST_PARTY)
                                and "pip install" in run]
                       if third and secret:
                           problems.append(
