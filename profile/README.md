@@ -1,5 +1,7 @@
 # TransientCatalysis
 
+**tcat** stands for **Traceable Campaigns, Artifacts and Tools** (born from transient catalysis).
+
 **An open software stack for transient kinetics: from an instrument file to a fitted, reduced and designed microkinetic model, with every result traceable to the data and the code that produced it.**
 
 A transient experiment perturbs a reactor's inlet (a pseudo-random binary sequence, a step, a pulse train) and records the response. Minutes of such data can carry as much kinetic information as days of steady-state measurements, if the analysis is careful about what the data does and does not determine. This stack is that analysis, built so that someone else can check it:
